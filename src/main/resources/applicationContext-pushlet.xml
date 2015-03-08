@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:dwr="http://www.directwebremoting.org/schema/spring-dwr"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+  		http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+  		http://www.springframework.org/schema/context
+        http://www.springframework.org/schema/context/spring-context-4.0.xsd
+        http://www.springframework.org/schema/aop
+        http://www.springframework.org/schema/aop/spring-aop-4.0.xsd
+        http://www.directwebremoting.org/schema/spring-dwr
+    	http://www.directwebremoting.org/schema/spring-dwr-3.0.xsd
+        http://www.springframework.org/schema/tx
+     	http://www.springframework.org/schema/tx/spring-tx-4.0.xsd">
+
+	<context:component-scan base-package="org.rency.pushlet" />
+	
+	<bean id="pushletAspect" class="org.rency.pushlet.aspect.PushletAspect" />
+	<aop:config proxy-target-class="true">
+		<aop:pointcut id="pushletServicePointcut" expression="execution(public * org.rency.pushlet.service.impl..*.*(..))" />
+		<aop:advisor advice-ref="txAdvice" pointcut-ref="pushletServicePointcut" />
+		<aop:aspect ref="pushletAspect">
+			<aop:before pointcut-ref="pushletServicePointcut" method="beforeAdvice" />
+			<aop:after-returning pointcut-ref="pushletServicePointcut" method="afterAdvice" />
+			<aop:after-throwing pointcut-ref="pushletServicePointcut" method="afterThrowAdvice" throwing="ex" />
+		</aop:aspect>
+	</aop:config>
+	
+	<!-- dwr配置 -->
+	<dwr:configuration>
+	    <dwr:convert type="bean" class="org.rency.pushlet.beans.MessageQueue" />
+  	</dwr:configuration>
+    <bean id="pushMessage" class="org.rency.pushlet.dwr.PushMessage" init-method="initMethod" destroy-method="destroyMethod" scope="singleton">
+      <dwr:remote javascript="message">
+            <dwr:include method="push" />
+      </dwr:remote>
+    </bean>
+
+</beans>
